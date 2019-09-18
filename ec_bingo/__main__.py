@@ -82,14 +82,15 @@ if __name__ == "__main__":
 Usage:
 	{sys.argv[0]} new > board.json
 	{sys.argv[0]} mark <point> <name> < board.json > new-board.json
+	{sys.argv[0]} unmark <point> < board.json > new-board.json
 	{sys.argv[0]} render < board.json > board.png
 
 Creates a new bingo board for use with Emote Collector,
-or marks a point on an existing board.
+or modifies a point on an existing board.
 
-Mark and render read board data as JSON from stdin.
-Mark and new write board data as JSON to stdout.
-Render writes a PNG image to stdout.
+Mark and unmark read board data as JSON from stdin and writes board data to stdout.
+New takes no arguments and no input, and writes board data to stdout.
+Render reads board data from stdin and writes a PNG image to stdout.
 """, file=sys.stderr)
         sys.exit(1)
 
