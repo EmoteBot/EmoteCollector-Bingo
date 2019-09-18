@@ -8,17 +8,6 @@ COORDS = {'b': [(284, 287), (284, 552), (284, 817), (284, 1081), (284, 1347)],
 
 q = []
 
-
-async def fetch_emote(name, loop):
-    client = aioec.Client(loop=loop)
-    find = await client.search(name)
-    await client.close()
-    for e in find:
-        if e.name.lower() == name.lower():
-            q.append(e)
-            return
-
-
 if __name__ == "__main__":
     import sys
 
@@ -65,11 +54,11 @@ directory.
         sys.exit(1)
     assert point != 'n3'
     print("One moment...")
+    import aiohttp
     import asyncio
     import aioec
     import os
     import io
-    import requests
 
     a, b = point
     point = COORDS[a][int(b)-1]
@@ -77,14 +66,16 @@ directory.
     file = os.environ.get('ECBINGOBOARD', 'output_board.png')
     with Image.open(file) as img:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(fetch_emote(emoji, loop))
+        client = aioec.Client()
         try:
-            emoji = q[0]
-        except IndexError:
+            emoji = loop.run_until_complete(client.emote(emoji))
+        except aioec.NotFound:
             print("Didn't find any emote by that name.")
             sys.exit(1)
-        uri = f'https://cdn.discordapp.com/emojis/{emoji.id}.{"gif" if emoji.animated else "png"}?v=1'
-        eimg = Image.open(io.BytesIO(requests.get(uri).content)).convert('RGBA')
+        async def read(uri):
+            async with aiohttp.ClientSession() as sess, sess.get(uri) as resp:
+                return await resp.read()
+        eimg = Image.open(io.BytesIO(loop.run_until_complete(read(emoji.url)))).convert('RGBA')
         eimg = eimg.resize((256, 256))
         img.paste(eimg, point, eimg)
         img.save("output_board.png", "png")
