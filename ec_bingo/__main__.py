@@ -78,12 +78,12 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) == 1:
-        print(f"""\
+        print("""\
 Usage:
-	{sys.argv[0]} new > board.json
-	{sys.argv[0]} mark <point> <name> < board.json > new-board.json
-	{sys.argv[0]} unmark <point> < board.json > new-board.json
-	{sys.argv[0]} render < board.json > board.png
+	python -m ec_bingo new > board.json
+	python -m ec_bingo mark <point> <name> < board.json > new-board.json
+	python -m ec_bingo unmark <point> < board.json > new-board.json
+	python -m ec_bingo render < board.json > board.png
 
 Creates a new bingo board for use with Emote Collector,
 or modifies a point on an existing board.
