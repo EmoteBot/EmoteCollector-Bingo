@@ -25,7 +25,7 @@ class Bingo:
 
 	def is_playable(self, col, row):
 		"""return whether the square has room"""
-		return self[col, row] == 0
+		return not self[col, row].has_piece
 
 	def has_won(self):
 		board = self.board
@@ -50,7 +50,7 @@ class Bingo:
 
 	def __getitem__(self, pos):
 		mask = self._mask(pos)
-		return self.data.get(pos), self.board & mask != 0
+		return SquareInfo(self.data.get(pos), self.board & mask != 0)
 
 	@classmethod
 	def _mask(cls, pos):
