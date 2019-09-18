@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BlueOak-1.0.0
+
 from collections import namedtuple
 
 SquareInfo = namedtuple('SquareInfo', 'data has_piece')

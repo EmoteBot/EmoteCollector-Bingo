@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BlueOak-1.0.0
+
 import asyncio
 import base64
 import functools
