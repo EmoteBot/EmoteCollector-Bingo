@@ -1,76 +1,127 @@
+import asyncio
+import base64
 import functools
+import io
+import json
+import random
+import operator
+import os
+import sys
+import textwrap
+from pathlib import Path
 
-COORDS = {'b': [(284, 287), (284, 552), (284, 817), (284, 1081), (284, 1347)],
-          'i': [(548, 287), (548, 552), (548, 817), (548, 1081), (548, 1347)],
-          'n': [(813, 287), (813, 552), (813, 1081), (813, 1347)],
-          'g': [(1078, 287), (1078, 552), (1078, 817), (1078, 1081), (1078, 1347)],
-          'o': [(1342, 287), (1342, 552), (1342, 817), (1342, 1081), (1342, 1347)]}
+import aiohttp
+import aioec
+from PIL import Image, ImageDraw, ImageFont
+
+from .board import Bingo
+
+COORDS = {'B': [(284, 287), (284, 552), (284, 817), (284, 1081), (284, 1347)],
+          'I': [(548, 287), (548, 552), (548, 817), (548, 1081), (548, 1347)],
+          'N': [(813, 287), (813, 552), (813, 1081), (813, 1347)],
+          'G': [(1078, 287), (1078, 552), (1078, 817), (1078, 1081), (1078, 1347)],
+          'O': [(1342, 287), (1342, 552), (1342, 817), (1342, 1081), (1342, 1347)]}
+
+HERE = Path(__file__).parent
+
+def download(emote_name):
+    async def read(name):
+        async with \
+            aiohttp.ClientSession() as sess, \
+            aioec.Client() as client, \
+            sess.get((await client.emote(emote_name)).url) as resp \
+        :
+            return await resp.read()
+    try:
+        return asyncio.get_event_loop().run_until_complete(read(emote_name))
+    except aioec.NotFound:
+        print(f'Emote "{emote_name}" not found.', file=sys.stderr)
+        sys.exit(2)
+
+def draw_board(cats):
+    font = ImageFont.truetype(str(HERE / "arialbd.ttf"), size=44)
+    with Image.open(HERE / "bingo_board_base.png") as img:
+        draw = ImageDraw.Draw(img)
+        for c, (x, y) in zip(cats, functools.reduce(operator.concat, COORDS.values())):
+            draw.multiline_text((x, y), "\n".join(textwrap.wrap(c, 10)), font=font, fill=(0, 0, 0))
+    return img
+
+def render(board_data):
+    img = draw_board(board_data['categories'])
+    marks = board_data['emotes'].items()
+    mark(img, ((point, base64.b64decode(img.encode('ascii'))) for point, img in marks))
+    return img
+
+def parse_point(point):
+    col, row = point
+    return col, int(row)
+
+def mark(img, marks):
+    for point, eimg in marks:
+        col, row = parse_point(point)
+        point = COORDS[col][row - 1]
+
+        eimg = Image.open(io.BytesIO(eimg)).convert('RGBA')
+        eimg = eimg.resize((256, 256))
+        img.paste(eimg, point, eimg)
+
+def new():
+    with open(HERE / "bingo_categories.txt") as f:
+        cats = list(map(str.rstrip, f))
+    random.shuffle(cats)
+
+    board = Bingo()
+    board.data = {'categories': cats[:-26:-1], 'emotes': {}}
+    return vars(board)
 
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) == 1:
-        print("""python -m ec_bingo <new|mark <point> <name>>
+        print(f"""\
+Usage:
+	{sys.argv[0]} new > board.json
+	{sys.argv[0]} mark <point> <name> < board.json > new-board.json
+	{sys.argv[0]} render < board.json > board.png
 
 Creates a new bingo board for use with Emote Collector,
 or marks a point on an existing board.
 
-Or, marks a point on an existing board from stdin.
-Boards will be written to stdout.
+Mark and render read board data as JSON from stdin.
+Mark and new write board data as JSON to stdout.
+Render writes a PNG image to stdout.
 """, file=sys.stderr)
         sys.exit(1)
 
-    from PIL import Image, ImageDraw, ImageFont
     if sys.argv[1] == 'new':
-        import operator
-        import textwrap
-        import pathlib
-        import random
-        ldir = pathlib.Path(__file__).parent
-        font = ImageFont.truetype(str(ldir / "arialbd.ttf"), size=44)
-        with open(ldir / "bingo_categories.txt") as f:
-            cats = f.readlines()
-        with Image.open(ldir / "bingo_board_base.png") as img:
-            draw = ImageDraw.Draw(img)
-            random.shuffle(cats)
-            for x, y in functools.reduce(operator.concat, COORDS.values()):
-                c = cats.pop()
-                draw.multiline_text((x, y), "\n".join(textwrap.wrap(c, 10)), font=font, fill=(0, 0, 0))
-            img.save(sys.stdout.buffer, "png")
+        json.dump(new(), sys.stdout)
         sys.exit(0)
-    if sys.argv[1] != 'mark':
+    if sys.argv[1] not in ('render', 'mark'):
         print("Unrecognized argument(s):", *sys.argv, file=sys.stderr)
         sys.exit(1)
 
+    board_data = json.load(sys.stdin)
+
+    if sys.argv[1] == 'render':
+        img = render(board_data['data'])
+        img.save(sys.stdout.buffer, 'png')
+        sys.exit(0)
+
+    # sys.argv[1] == 'mark'
     try:
-        _, _, point, emoji = sys.argv
+        _, _, point, emote = sys.argv
     except ValueError:
         print("Not enough arguments supplied.", file=sys.stderr)
         sys.exit(1)
-    if point == 'n3':
-        print('Point may not be "n3".', file=sys.stderr)
+    if point == 'N3':
+        print('Point may not be "N3".', file=sys.stderr)
         sys.exit(1)
-    import aiohttp
-    import asyncio
-    import aioec
-    import os
-    import io
 
-    a, b = point
-    point = COORDS[a][int(b)-1]
+    board = Bingo()
+    vars(board).update(board_data)
+    col, row = parse_point(point)
+    board[col, row] = 1
+    board.data['emotes'][point] = base64.b64encode(download(emote)).decode('ascii')
 
-    with Image.open(sys.stdin.buffer) as img:
-        loop = asyncio.get_event_loop()
-        client = aioec.Client()
-        try:
-            emoji = loop.run_until_complete(client.emote(emoji))
-        except aioec.NotFound:
-            print("Didn't find any emote by that name.", file=sys.stderr)
-            sys.exit(1)
-        async def read(uri):
-            async with aiohttp.ClientSession() as sess, sess.get(uri) as resp:
-                return await resp.read()
-        eimg = Image.open(io.BytesIO(loop.run_until_complete(read(emoji.url)))).convert('RGBA')
-        eimg = eimg.resize((256, 256))
-        img.paste(eimg, point, eimg)
-        img.save(sys.stdout.buffer, "png")
+    json.dump(vars(board), sys.stdout)
+    sys.exit(0)
