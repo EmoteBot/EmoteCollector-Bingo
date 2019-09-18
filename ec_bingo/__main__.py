@@ -41,7 +41,7 @@ def download(emote_name):
         sys.exit(2)
 
 def draw_board(cats):
-    font = ImageFont.truetype(str(HERE / "arialbd.ttf"), size=44)
+    font = ImageFont.truetype(str(HERE / "DejaVuSans.ttf"), size=40)
     with Image.open(HERE / "bingo_board_base.png") as img:
         draw = ImageDraw.Draw(img)
         for c, (x, y) in zip(cats, functools.reduce(operator.concat, COORDS.values())):
