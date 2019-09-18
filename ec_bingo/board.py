@@ -36,7 +36,7 @@ class Bingo:
 		if (y & (y >> 2 * self.H1)) != 0:  # horizontal -
 			return True
 		y = board & (board >> self.H2)
-		if (y & (y >> 2 * self.H1)) != 0:  # diagonal /
+		if (y & (y >> 2 * self.H2)) != 0:  # diagonal /
 			return True
 		y = board & (board >> 1)
 		return (y & (y >> 2)) != 0  # vertical |
