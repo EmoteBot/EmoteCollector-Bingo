@@ -1,5 +1,4 @@
 from collections import namedtuple
-from io import StringIO
 
 SquareInfo = namedtuple('SquareInfo', 'data has_piece')
 
@@ -60,6 +59,7 @@ class Bingo:
 		return 1 << i
 
 	def __str__(self):
+		from io import StringIO
 		buf = StringIO()
 
 		buf.write('  ')
@@ -76,6 +76,7 @@ class Bingo:
 				mask = 1 << w
 				buf.write(' ')
 				buf.write('X' if self.board & mask != 0 else '.')
-			buf.write('\n')
+			if h != 0:  # skip writing the newline at the end
+				buf.write('\n')
 
 		return buf.getvalue()
