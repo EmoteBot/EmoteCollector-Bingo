@@ -96,7 +96,7 @@ Render writes a PNG image to stdout.
     if sys.argv[1] == 'new':
         json.dump(new(), sys.stdout)
         sys.exit(0)
-    if sys.argv[1] not in ('render', 'mark'):
+    if sys.argv[1] not in ('render', 'mark', 'unmark'):
         print("Unrecognized argument(s):", *sys.argv, file=sys.stderr)
         sys.exit(1)
 
@@ -107,9 +107,8 @@ Render writes a PNG image to stdout.
         img.save(sys.stdout.buffer, 'png')
         sys.exit(0)
 
-    # sys.argv[1] == 'mark'
     try:
-        _, _, point, emote = sys.argv
+        _, _, point, *rest = sys.argv
     except ValueError:
         print("Not enough arguments supplied.", file=sys.stderr)
         sys.exit(1)
@@ -119,9 +118,19 @@ Render writes a PNG image to stdout.
 
     board = Bingo()
     vars(board).update(board_data)
+
     col, row = parse_point(point)
-    board[col, row] = 1
-    board.data['emotes'][point] = base64.b64encode(download(emote)).decode('ascii')
+    if sys.argv[1] == 'unmark':
+        board[col, row] = 0
+        del board.data['emotes'][point]
+    else:  # mark
+        try:
+            emote, = rest
+        except ValueError:
+            print("Not enough arguments supplied.", file=sys.stderr)
+            sys.exit(1)
+        board[col, row] = 1
+        board.data['emotes'][point] = base64.b64encode(download(emote)).decode('ascii')
 
     json.dump(vars(board), sys.stdout)
     sys.exit(0)
