@@ -27,3 +27,4 @@ logos/icons
 nsfw edge cases (debateably nsfw)
 spanish names
 pictures of discord chat
+furry
