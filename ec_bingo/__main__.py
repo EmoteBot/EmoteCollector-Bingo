@@ -15,10 +15,8 @@ if __name__ == "__main__":
 Creates a new bingo board for use with Emote Collector,
 or marks a point on an existing board.
 
-Or, marks a point on an existing board.
-You can specify a path under the env var ECBINGOBOARD
-or if left unset, searches for one in the current working
-directory.
+Or, marks a point on an existing board from stdin.
+Boards will be written to stdout.
 """, file=sys.stderr)
         sys.exit(1)
 
