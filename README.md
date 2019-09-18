@@ -2,7 +2,9 @@
 Created for the Emote Moderators of Emote Collector.
 
 - `python -m ec_bingo new`
-- `python -m ec_bingo mark <point> <name>`
+- `python -m ec_bingo mark <point> <name> < board.json > new-board.json`
+  (To overwrite board.json in place, use the `sponge` command from moreutils.)
+- `python -m ec_bingo unmark <point> < board.json > new-board.json`
 - `python -m ec_bingo render < board.json > board.png`
 
 Creates a new bingo board for use with Emote Collector,
