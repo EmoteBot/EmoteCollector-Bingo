@@ -12,6 +12,7 @@ class Bingo:
 	H2 = HEIGHT + 2
 	SIZE = HEIGHT * WIDTH
 	SIZE1 = H1 * WIDTH
+	SQUARES = SIZE - 1  # free space
 
 	COL_I = {c: i for i, c in enumerate('BINGO')}
 	COL_NAMES = {i: c for c, i in COL_I.items()}

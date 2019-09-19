@@ -92,7 +92,7 @@ def new():
     random.shuffle(cats)
 
     board = Bingo()
-    board.data = {'categories': cats[:-26:-1], 'emotes': {}}
+    board.data = {'categories': cats[:Bingo.SQUARES], 'emotes': {}}
     return vars(board)
 
 if __name__ == "__main__":
