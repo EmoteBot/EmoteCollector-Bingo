@@ -151,8 +151,8 @@ Render reads board data from stdin and writes a PNG image to stdout.
             print("Not enough arguments supplied.", file=sys.stderr)
             sys.exit(1)
         board[col, row] = 1
-        emote_name, emote_id, image = download(emote)
-        image = base64.b64decode(image).decode('ascii')
+        emote_name, emote_id, image = download(emote_name)
+        image = base64.b64encode(image).decode('ascii')
         board.data['emotes'][point] = emote_name, emote_id, image
 
     json.dump(vars(board), sys.stdout)
