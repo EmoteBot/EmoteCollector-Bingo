@@ -4,6 +4,7 @@ import asyncio
 import base64
 import functools
 import io
+import itertools
 import json
 import random
 import operator
@@ -14,15 +15,19 @@ from pathlib import Path
 
 import aiohttp
 import aioec
-from PIL import Image, ImageDraw, ImageFont
+from wand.image import Image
+from wand.drawing import Drawing
 
 from .board import Bingo
+from .utils import scale_resolution
 
-COORDS = {'B': [(284, 287), (284, 552), (284, 817), (284, 1081), (284, 1347)],
-          'I': [(548, 287), (548, 552), (548, 817), (548, 1081), (548, 1347)],
-          'N': [(813, 287), (813, 552), (813, 1081), (813, 1347)],
-          'G': [(1078, 287), (1078, 552), (1078, 817), (1078, 1081), (1078, 1347)],
-          'O': [(1342, 287), (1342, 552), (1342, 817), (1342, 1081), (1342, 1347)]}
+_coords = list(itertools.product((284, 548, 813, 1078, 1342), (327, 592, 857, 1121, 1387)))
+COORDS = dict(zip('BINGO', (_coords[i:i+Bingo.HEIGHT] for i in range(0, len(_coords), Bingo.HEIGHT))))
+del COORDS['N'][2]  # free space
+del _coords
+
+# width and height (within the border) of one square
+SQUARE_SIZE = 256
 
 HERE = Path(__file__).parent
 
@@ -41,31 +46,40 @@ def download(emote_name):
         sys.exit(2)
 
 def draw_board(cats):
-    font = ImageFont.truetype(str(HERE / "DejaVuSans.ttf"), size=40)
-    with Image.open(HERE / "bingo_board_base.png") as img:
-        draw = ImageDraw.Draw(img)
+    img = Image(filename=HERE / "bingo_board_base.png")
+    with Drawing() as draw:
+        draw.font = str(HERE / 'DejaVuSans.ttf')
+        draw.font_size = 40
         for c, (x, y) in zip(cats, functools.reduce(operator.concat, COORDS.values())):
-            draw.multiline_text((x, y), "\n".join(textwrap.wrap(c, 10)), font=font, fill=(0, 0, 0))
+            draw.text(x, y, "\n".join(textwrap.wrap(c, 10)))
+        draw(img)
     return img
 
 def render(board_data):
     img = draw_board(board_data['categories'])
     marks = board_data['emotes'].items()
-    mark(img, ((point, base64.b64decode(img.encode('ascii'))) for point, img in marks))
+    with Drawing() as draw:
+        mark(draw, img, ((point, base64.b64decode(img.encode('ascii'))) for point, img in marks))
+        draw(img)
     return img
 
 def parse_point(point):
     col, row = point
     return col, int(row)
 
-def mark(img, marks):
+def mark(draw, img, marks):
     for point, eimg in marks:
         col, row = parse_point(point)
-        point = COORDS[col][row - 1]
+        left, top = COORDS[col][row - 1]
 
-        eimg = Image.open(io.BytesIO(eimg)).convert('RGBA')
-        eimg = eimg.resize((256, 256))
-        img.paste(eimg, point, eimg)
+        half = SQUARE_SIZE // 2
+        with Image(blob=eimg) as eimg:
+            eimg.resize(*scale_resolution((img.width, img.height), (half, half)))
+            draw.composite(
+                operator='over',
+                left=left+half-65, top=top+25,
+                width=eimg.width, height=eimg.height,
+                image=eimg)
 
 def new():
     with open(HERE / "bingo_categories.txt") as f:
@@ -94,7 +108,7 @@ Mark and unmark read board data as JSON from stdin and writes board data to stdo
 New takes no arguments and no input, and writes board data to stdout.
 Render reads board data from stdin and writes a PNG image to stdout.
 """, file=sys.stderr)
-        sys.exit(1)
+        sys.exit(0)
 
     if sys.argv[1] == 'new':
         json.dump(new(), sys.stdout)
@@ -107,8 +121,8 @@ Render reads board data from stdin and writes a PNG image to stdout.
     board_data = json.load(sys.stdin)
 
     if sys.argv[1] == 'render':
-        img = render(board_data['data'])
-        img.save(sys.stdout.buffer, 'png')
+        with render(board_data['data']) as img, img.convert('png') as converted:
+            converted.save(file=sys.stdout.buffer)
         sys.exit(0)
 
     try:
