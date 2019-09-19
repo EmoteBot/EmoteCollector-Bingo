@@ -98,6 +98,7 @@ Render reads board data from stdin and writes a PNG image to stdout.
 
     if sys.argv[1] == 'new':
         json.dump(new(), sys.stdout)
+        print()
         sys.exit(0)
     if sys.argv[1] not in ('render', 'mark', 'unmark'):
         print("Unrecognized argument(s):", *sys.argv, file=sys.stderr)
@@ -136,4 +137,5 @@ Render reads board data from stdin and writes a PNG image to stdout.
         board.data['emotes'][point] = base64.b64encode(download(emote)).decode('ascii')
 
     json.dump(vars(board), sys.stdout)
+    print()
     sys.exit(0)
