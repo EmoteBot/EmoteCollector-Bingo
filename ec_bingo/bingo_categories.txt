@@ -14,7 +14,7 @@ magik
 current meme
 ping emote
 regular blob
-cat blob
+cat/meow blob
 google blob
 crying (excluding :joy: edits)
 laughing (excluding :joy: edits)
@@ -27,3 +27,4 @@ nsfw edge cases (questionably nsfw)
 spanish names
 pictures of discord chat
 furry
+irl photos
