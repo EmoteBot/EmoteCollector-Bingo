@@ -140,6 +140,7 @@ Render reads board data from stdin and writes a PNG image to stdout.
     board = Bingo()
     vars(board).update(board_data)
 
+    point = point.upper()
     col, row = parse_point(point)
     if sys.argv[1] == 'unmark':
         board[col, row] = 0
