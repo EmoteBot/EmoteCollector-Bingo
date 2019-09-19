@@ -21,7 +21,6 @@ laughing (excluding :joy: edits)
 implies nsfw but not directly
 name 20+ characters long
 name <4 characters long
-name that consists purely of _
 didn't even bother to set a name
 logos/icons
 nsfw edge cases (questionably nsfw)
