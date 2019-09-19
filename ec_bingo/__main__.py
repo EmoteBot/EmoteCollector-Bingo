@@ -30,15 +30,13 @@ SQUARE_SIZE = 256
 HERE = Path(__file__).parent
 
 def download(emote_name):
-    async def read(name):
-        async with \
-            aiohttp.ClientSession() as sess, \
-            aioec.Client() as client, \
-            sess.get((await client.emote(emote_name)).url) as resp \
-        :
-            return await resp.read()
+    async def download(name):
+        async with aioec.Client() as client:
+            emote = await client.emote(name)
+        async with aiohttp.ClientSession() as sess, sess.get(emote.url) as resp:
+            return emote.name, emote.id, await resp.read()
     try:
-        return asyncio.get_event_loop().run_until_complete(read(emote_name))
+        return asyncio.get_event_loop().run_until_complete(download(emote_name))
     except aioec.NotFound:
         print(f'Emote "{emote_name}" not found.', file=sys.stderr)
         sys.exit(2)
@@ -62,7 +60,7 @@ def render(board_data):
     img = draw_board(board_data['categories'])
     marks = board_data['emotes'].items()
     with Drawing() as draw:
-        mark(draw, img, ((point, base64.b64decode(img.encode('ascii'))) for point, img in marks))
+        mark(draw, img, ((point, base64.b64decode(img.encode('ascii'))) for point, (*_, img) in marks))
         draw(img)
     return img
 
@@ -148,12 +146,14 @@ Render reads board data from stdin and writes a PNG image to stdout.
         del board.data['emotes'][point]
     else:  # mark
         try:
-            emote, = rest
+            emote_name, = rest
         except ValueError:
             print("Not enough arguments supplied.", file=sys.stderr)
             sys.exit(1)
         board[col, row] = 1
-        board.data['emotes'][point] = base64.b64encode(download(emote)).decode('ascii')
+        emote_name, emote_id, image = download(emote)
+        image = base64.b64decode(image).decode('ascii')
+        board.data['emotes'][point] = emote_name, emote_id, image
 
     json.dump(vars(board), sys.stdout)
     print()
