@@ -15,8 +15,6 @@ from pathlib import Path
 
 import aiohttp
 import aioec
-from wand.image import Image
-from wand.drawing import Drawing
 
 from .board import Bingo
 from .utils import scale_resolution
@@ -46,6 +44,9 @@ def download(emote_name):
         sys.exit(2)
 
 def draw_board(cats):
+    from wand.image import Image
+    from wand.drawing import Drawing
+
     img = Image(filename=HERE / "bingo_board_base.png")
     with Drawing() as draw:
         draw.font = str(HERE / 'DejaVuSans.ttf')
@@ -56,6 +57,8 @@ def draw_board(cats):
     return img
 
 def render(board_data):
+    from wand.drawing import Drawing
+
     img = draw_board(board_data['categories'])
     marks = board_data['emotes'].items()
     with Drawing() as draw:
@@ -68,6 +71,8 @@ def parse_point(point):
     return col, int(row)
 
 def mark(draw, img, marks):
+    from wand.image import Image
+
     for point, eimg in marks:
         col, row = parse_point(point)
         left, top = COORDS[col][row - 1]
