@@ -19,10 +19,10 @@ import aioec
 from .board import Bingo
 from .utils import scale_resolution
 
-_coords = list(itertools.product((284, 548, 813, 1078, 1342), (327, 592, 857, 1121, 1387)))
-COORDS = dict(zip('BINGO', (_coords[i:i+Bingo.HEIGHT] for i in range(0, len(_coords), Bingo.HEIGHT))))
+COORDS = {
+	c: [(x, y) for y in (327, 592, 857, 1121, 1387)]
+	for c, x in zip('BINGO', (284, 548, 813, 1078, 1342))}
 del COORDS['N'][2]  # free space
-del _coords
 
 # width and height (within the border) of one square
 SQUARE_SIZE = 256
