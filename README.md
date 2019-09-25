@@ -1,4 +1,7 @@
 # Emote Collector Bingo
+
+**This repository has been archived, as it is now incorporated into Emote Collector itself.**
+
 Created for the Emote Moderators of Emote Collector.
 
 - `python -m ec_bingo new`
