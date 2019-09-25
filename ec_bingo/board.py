@@ -94,13 +94,12 @@ class Bingo:
 
 		buf.write('\n')
 
-		for h in range(self.HEIGHT - 1, -1, -1):
-			buf.write(str(self.HEIGHT - h))
-			for w in range(h, self.SIZE, self.HEIGHT):
-				mask = 1 << w
+		for h in range(1, self.HEIGHT + 1):
+			buf.write(str(h))
+			for w in 'BINGO':
 				buf.write(' ')
-				buf.write('X' if self.board & mask != 0 else '.')
-			if h != 0:  # skip writing the newline at the end
+				buf.write('X' if self[w, h] else '.')
+			if h != self.HEIGHT:  # skip writing the newline at the end
 				buf.write('\n')
 
 		return buf.getvalue()
